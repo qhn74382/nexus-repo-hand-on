@@ -1,0 +1,124 @@
+#cloudformation template
+java8-installation0template.yml
+
+#
+wget https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+
+#extract the tar file
+tar xvzf latest-unix.tar.gz
+
+#cd to binary folder to launch the server
+cd nexus-3.27.0-03/bin
+
+#look for a executable file - global execution
+nexus
+
+#run the nexus executable file
+./nexus run
+
+
+As ec2-user run the commands below:
+Download Nexus
+==============
+1. wget https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+2. tar xvzf latest-unix.tar.gz
+3. cd nexus-3.27.0-03
+Start Nexus server
+=================
+4. ./bin/nexus run
+Open new terminal and access server to get password
+===================================================
+5. cd ../../sonatype-work/nexus3/ or cd /home/ec2-user/sonatype-work/nexus3
+less admin.password
+(xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
+
+
+Open new terminal
+mkdir nexus-hand-on
+cd nexus-hand-on
+vi pom.xml
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>nexus-proxy</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+    </dependency>
+  </dependencies>
+</project>
+
+
+cd ~
+wget http://mirrors.advancedhosters.com/apache/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+tar xvzf apache-maven-3.6.3-bin.tar.gz
+cd nexus-hand-on
+/home/ec2-user/apache-maven-3.6.3/bin/mvn package
+
+BUILD SUCCESS!!!
+#current nexus runs on local
+ll
+rm -rf target
+
+#we need to push to nexus repository
+#go to the instance ip:8081 login with admin and pw
+#create new repository
+#named repo 
+maven-proxy-hands-on
+
+#back to terminal to update the new nexus repository
+vi /home/ec2-user/nexus-3.27.0-03/system/settings.xml
+
+<settings>
+  <mirrors>
+    <mirror>
+      <!--This sends everything else to /public -->
+      <id>nexus</id>
+      <mirrorOf>*</mirrorOf>
+      <url>http://ec2-3-88-63-36.compute-1.amazonaws.com:8081/repository/maven-proxy-hands-on/</url>
+    </mirror>
+  </mirrors>
+  <profiles>
+    <profile>
+      <id>nexus</id>
+      <!--Enable snapshots for the built in central repo to direct -->
+      <!--all requests to nexus via the mirror -->
+      <repositories>
+        <repository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </repository>
+      </repositories>
+     <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <url>http://central</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>true</enabled></snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+<activeProfiles>
+    <!--make the profile active all the time -->
+    <activeProfile>nexus</activeProfile>
+  </activeProfiles>
+  <servers>
+    <server>
+      <id>nexus</id>
+      <username>admin</username>
+      <password>123456</password> 
+    </server>
+  </servers>
+</settings>
+
+#build the maven package again (first we build on the local, now to the repo)
+/home/ec2-user/apache-maven-3.6.3/bin/mvn package
+
+cp /home/ec2-user/nexus-3.27.0-03/system/settings.xml ~/.m2/
