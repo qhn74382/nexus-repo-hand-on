@@ -30,8 +30,8 @@ Open new terminal and access server to get password
 ===================================================
 5. cd ../../sonatype-work/nexus3/ or cd /home/ec2-user/sonatype-work/nexus3
 less admin.password
-(xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx)
-
+7abf386e-8dd1-4065-b3d6-b06256412b2c
+admin.password
 
 Open new terminal
 mkdir nexus-hand-on
@@ -122,3 +122,49 @@ vi /home/ec2-user/nexus-3.27.0-03/system/settings.xml
 /home/ec2-user/apache-maven-3.6.3/bin/mvn package
 
 cp /home/ec2-user/nexus-3.27.0-03/system/settings.xml ~/.m2/
+
+
+#Continue - run the nexus again since we close the instance
+ssh into the instance
+cd nexus-3.27.0-03/bin
+./nexus run
+
+#open new terminal
+ssh in
+#change the settings file to update new dns url
+vi /home/ec2-user/.m2/settings.xml
+
+cd nexus-hand-on
+vi pom.xml
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.example</groupId>
+  <artifactId>nexus-proxy</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.10</version>
+    </dependency>
+  </dependencies>
+  <distributionManagement>
+<repository>
+<id>nexus</id>
+<name>maven-releases</name>
+<url>http://http://ec2-3-87-125-50.compute-1.amazonaws.com:8081//repository/maven-releases/</url>
+</repository>
+<snapshotRepository>
+<id>nexus</id>
+<name>maven-snapshots</name>
+<url>http://http://ec2-3-87-125-50.compute-1.amazonaws.com:8081//repository/maven-snapshots/</url>
+</snapshotRepository>
+</distributionManagement>
+</project>
+
+#add path to setting file
+export PATH=$PATH:/home/ec2-user/apache-maven-3.6.3/bin
+/home/ec2-user/nexus-hands-on
+
+mvn clean deploy
